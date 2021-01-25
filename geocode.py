@@ -8,10 +8,13 @@ import shutil
 
 
 def geocode(infile, outdir, shapefile, externalDEMFile=None,
-            refarea='gamma0', terrainFlattening=True):
+            refarea='gamma0', terrainFlattening=True, tmp_dir=None):
 
     identifier = os.path.splitext(os.path.split(infile)[1])[0]
-    tmp_dir = "/tmp/" + identifier
+    if not tmp_dir:
+        tmp_dir = tmp_dir + "/" + identifier
+    else:
+        tmp_dir = "/tmp/" + identifier
     os.makedirs(tmp_dir)
 
     # Use this projection for SNAP, before reprojectiing to EQUI7

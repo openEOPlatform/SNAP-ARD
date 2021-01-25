@@ -6,6 +6,7 @@ infile = sys.argv[1]
 outdir = sys.argv[2]
 shapefile = sys.argv[3]
 externalDEMFile = sys.argv[4]
+tmpdir = sys.argv[5]
 
 if "{" in shapefile:
     # This is a dict, convert from str
@@ -13,4 +14,5 @@ if "{" in shapefile:
 
 _ = geocode(infile, outdir,
             shapefile=shapefile,
-            externalDEMFile=externalDEMFile)
+            externalDEMFile=externalDEMFile,
+            tmp_dir=tmpdir)
