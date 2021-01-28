@@ -17,9 +17,7 @@ def geocode(infile, outdir, shapefile, externalDEMFile=None,
         tmp_dir = tmp_dir + "/" + identifier
     os.makedirs(tmp_dir)
 
-    # Use this projection for SNAP, before reprojectiing to EQUI7
-    # Note: SNAP does not support EQUI7 yet
-    epsg = 54032  # World Azimuthal Equidistant (https://epsg.io/54032)
+    epsg = 4326
     sampling = 10  # in meters
 
     _ = snap.geocode(infile=infile,
