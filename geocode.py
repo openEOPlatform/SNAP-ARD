@@ -44,6 +44,6 @@ def geocode(infile, outdir, shapefile, externalDEMFile=None,
     shutil.rmtree(tmp_dir)
 
     proc_time = time.time() - start_time
-    minutes = round(proc_time / 60)
-    seconds = round(((proc_time / 60) - minutes) * 60)
+    minutes = str(round(proc_time / 60))
+    seconds = str(round(((proc_time / 60) - minutes) * 60))
     print("Processing time: {mins} minutes and {secs} seconds.".format(mins=minutes, secs=seconds))
