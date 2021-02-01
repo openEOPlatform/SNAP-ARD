@@ -5,11 +5,13 @@ from glob import glob
 import os
 from pyroSAR import snap
 import shutil
+import time
 
 
 def geocode(infile, outdir, shapefile, externalDEMFile=None,
             refarea='gamma0', terrainFlattening=True, tmp_dir=None):
 
+    start_time = time.time()
     identifier = os.path.splitext(os.path.split(infile)[1])[0]
     if not tmp_dir:
         tmp_dir = "/tmp/" + identifier
@@ -40,3 +42,8 @@ def geocode(infile, outdir, shapefile, externalDEMFile=None,
                             output_dir=outdir,
                             gdal_path="/usr/bin")
     shutil.rmtree(tmp_dir)
+
+    proc_time = time.time() - start_time
+    minutes = round(proc_time / 60)
+    seconds = round(((proc_time / 60) - minutes) * 60)
+    print("Processing time: {mins} minutes and {secs} seconds.".format(mins=minutes, secs=seconds))
