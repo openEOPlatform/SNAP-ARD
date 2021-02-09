@@ -6,6 +6,7 @@ import os
 from pyroSAR import snap
 import shutil
 import time
+from uuid import uuid4
 
 
 def geocode(infile, outdir, shapefile, externalDEMFile=None,
@@ -14,9 +15,8 @@ def geocode(infile, outdir, shapefile, externalDEMFile=None,
     start_time = time.time()
     identifier = os.path.splitext(os.path.split(infile)[1])[0]
     if not tmp_dir:
-        tmp_dir = "/tmp/" + identifier
-    else:
-        tmp_dir = tmp_dir + "/" + identifier
+        tmp_dir = "/tmp/" + str(uuid4())
+    tmp_dir = tmp_dir + "/" + identifier
     os.makedirs(tmp_dir)
 
     epsg = 4326
@@ -44,6 +44,6 @@ def geocode(infile, outdir, shapefile, externalDEMFile=None,
     shutil.rmtree(tmp_dir)
 
     proc_time = time.time() - start_time
-    minutes = str(round(proc_time / 60))
-    seconds = str(round(((proc_time / 60) - minutes) * 60))
-    print("Processing time: {mins} minutes and {secs} seconds.".format(mins=minutes, secs=seconds))
+    minutes = round(proc_time / 60)
+    seconds = round(((proc_time / 60) - minutes) * 60)
+    print("Processing time: {mins} minutes and {secs} seconds.".format(mins=str(minutes), secs=str(seconds)))
