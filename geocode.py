@@ -2,8 +2,10 @@
 from equi7grid import equi7grid
 from equi7grid.image2equi7grid import image2equi7grid
 from glob import glob
+from osgeo.gdal import Warp
 import os
 from pyroSAR import snap
+import requests
 import shutil
 import time
 from uuid import uuid4
@@ -18,6 +20,10 @@ def geocode(infile, outdir, shapefile, externalDEMFile=None,
         tmp_dir = "/tmp/" + str(uuid4())
     tmp_dir = tmp_dir + "/" + identifier
     os.makedirs(tmp_dir)
+
+    if externalDEMFile:
+        # Crop DEM to bbox of infile
+        externalDEMFile = crop_DEM(infile, externalDEMFile, tmp_dir)
 
     epsg = 4326
     sampling = 10  # in meters
@@ -47,3 +53,27 @@ def geocode(infile, outdir, shapefile, externalDEMFile=None,
     minutes = round(proc_time / 60)
     seconds = round(((proc_time / 60) - minutes) * 60)
     print("Processing time: {mins} minutes and {secs} seconds.".format(mins=str(minutes), secs=str(seconds)))
+
+
+def crop_DEM(infile, dem_filepath, tmp_dir):
+    """ Crop DEM according to bbox of input file."""
+
+    # Get bbox of infile
+    csw_url = ("https://csw.eodc.eu/csw?service=CSW&version=2.0.2&request="
+               "GetRecordById&ElementSetName=full&outputSchema="
+               "http://www.opengis.net/cat/csw/2.0.2&id="
+               )
+    id = os.path.basename(infile).split('.zip')[0]
+    response = requests.get(f"{csw_url}{id}&outputFormat=application/json")
+    low_corner = response.json()['csw:GetRecordByIdResponse']['csw:Record']['ows:BoundingBox']['ows:LowerCorner']
+    minY = float(low_corner.split(' ')[0])
+    minX = float(low_corner.split(' ')[1])
+    up_corner = response.json()['csw:GetRecordByIdResponse']['csw:Record']['ows:BoundingBox']['ows:UpperCorner']
+    maxY = float(up_corner.split(' ')[0])
+    maxX = float(up_corner.split(' ')[1])
+
+    # Crop DEM
+    out_dem_filepath = f"{tmp_dir}/cropped_DEM.tif"
+    _ = Warp(out_dem_filepath, dem_filepath, outputBounds=(minX, minY, maxX, maxY))
+
+    return out_dem_filepath
