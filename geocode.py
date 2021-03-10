@@ -20,8 +20,8 @@ def geocode(infile, outdir, shapefile, externalDEMFile=None,
     if not tmp_dir:
         tmp_dir = "/tmp/" + str(uuid4())
     tmp_dir_snap = tmp_dir + "/" + identifier
-    os.makedirs(tmp_dir_snap)
-    os.makedirs(outdir)
+    os.makedirs(tmp_dir_snap, exist_ok=True)
+    os.makedirs(outdir, exist_ok=True)
 
     if externalDEMFile:
         # Crop DEM to bbox of infile
