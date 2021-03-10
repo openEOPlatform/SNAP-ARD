@@ -45,8 +45,7 @@ def geocode(infile, outdir, shapefile, externalDEMFile=None,
     # Move log file and SNAP xml file to outdir
     xml_file = glob(os.path.join(tmp_dir_snap, "*.xml"))[0]
     shutil.move(xml_file, xml_file.replace(tmp_dir_snap, outdir))
-
-    orb_dir = os.path.basename(f"{xml_file}").replace('A', 'ascending').replace('D', 'descending')
+    orb_dir = os.path.basename(f"{xml_file}")[10].replace('A', 'ascending').replace('D', 'descending')
     e7 = equi7grid.Equi7Grid(sampling=10)
     file_list = glob(tmp_dir_snap + "/S1*.tif")
     for this_file in file_list:
