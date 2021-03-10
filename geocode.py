@@ -7,6 +7,7 @@ import os
 from pyroSAR import snap
 import requests
 import shutil
+import subprocess
 import time
 from uuid import uuid4
 
@@ -20,10 +21,11 @@ def geocode(infile, outdir, shapefile, externalDEMFile=None,
         tmp_dir = "/tmp/" + str(uuid4())
     tmp_dir_snap = tmp_dir + "/" + identifier
     os.makedirs(tmp_dir_snap)
+    os.makedirs(outdir)
 
     if externalDEMFile:
         # Crop DEM to bbox of infile
-        externalDEMFile = crop_DEM(infile, externalDEMFile, tmp_dir)
+        externalDEMFile = crop_DEM(infile, externalDEMFile, tmp_dir_snap)
 
     epsg = 4326
     sampling = 10  # in meters
@@ -35,15 +37,31 @@ def geocode(infile, outdir, shapefile, externalDEMFile=None,
                      tr=sampling,
                      shapefile=shapefile,
                      externalDEMFile=externalDEMFile,
+                     externalDEMApplyEGM=False,
                      terrainFlattening=terrainFlattening,
                      cleanup=True, allow_RES_OSV=True,
-                     scaling='db', groupsize=1, removeS1ThermalNoise=True
+                     scaling='linear', groupsize=1, removeS1ThermalNoise=True
                      )
+    # Move log file and SNAP xml file to outdir
+    xml_file = glob(os.path.join(tmp_dir_snap, "*.xml"))[0]
+    shutil.move(xml_file, xml_file.replace(tmp_dir_snap, outdir))
 
-    # Reproject and tile to EQUI7
-    file_list = glob(tmp_dir + "/*.tif")
+    orb_dir = os.path.basename(f"{xml_file}").replace('A', 'ascending').replace('D', 'descending')
     e7 = equi7grid.Equi7Grid(sampling=10)
+    file_list = glob(tmp_dir_snap + "/S1*.tif")
     for this_file in file_list:
+        # Add metadata to geotiff headers
+        subprocess.run(['gdal_edit.py',
+                        '-mo', 'snap_version=7.0',
+                        '-mo', f'snap_xml_graph={xml_file}',
+                        '-mo', 'proc_facility=EODC-cloud',
+                        '-mo', f'start_time={identifier[17:32]}',
+                        '-mo', f'end_time={identifier[33:48]}',
+                        '-mo', f'orbit_direction={orb_dir}',
+                        this_file
+                        ], capture_output=True)
+
+        # Reproject and tile to EQUI7
         _ = image2equi7grid(e7, image=this_file,
                             output_dir=outdir,
                             gdal_path="/usr/bin")
