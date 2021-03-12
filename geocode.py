@@ -2,7 +2,7 @@
 from equi7grid import equi7grid
 from equi7grid.image2equi7grid import image2equi7grid
 from glob import glob
-from osgeo.gdal import Warp
+from osgeo.gdal import Translate
 import os
 from pyroSAR import snap
 import requests
@@ -90,14 +90,14 @@ def crop_DEM(infile, dem_filepath, tmp_dir):
     id = os.path.basename(infile).split('.zip')[0]
     response = requests.get(f"{csw_url}{id}&outputFormat=application/json")
     low_corner = response.json()['csw:GetRecordByIdResponse']['csw:Record']['ows:BoundingBox']['ows:LowerCorner']
-    minY = float(low_corner.split(' ')[0])
-    minX = float(low_corner.split(' ')[1])
+    lry = float(low_corner.split(' ')[0])
+    ulx = float(low_corner.split(' ')[1])
     up_corner = response.json()['csw:GetRecordByIdResponse']['csw:Record']['ows:BoundingBox']['ows:UpperCorner']
-    maxY = float(up_corner.split(' ')[0])
-    maxX = float(up_corner.split(' ')[1])
+    uly = float(up_corner.split(' ')[0])
+    lrx = float(up_corner.split(' ')[1])
 
     # Crop DEM
     out_dem_filepath = f"{tmp_dir}/cropped_DEM.tif"
-    _ = Warp(out_dem_filepath, dem_filepath, outputBounds=(minX, minY, maxX, maxY))
+    _ = Translate(out_dem_filepath, dem_filepath, projWin=(ulx, uly, lrx, lry))
 
     return out_dem_filepath
