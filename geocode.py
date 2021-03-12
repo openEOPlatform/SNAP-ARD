@@ -48,7 +48,14 @@ def geocode(infile, outdir, shapefile, externalDEMFile=None,
     orb_dir = os.path.basename(f"{xml_file}")[10].replace('A', 'ascending').replace('D', 'descending')
     e7 = equi7grid.Equi7Grid(sampling=10)
     file_list = glob(tmp_dir_snap + "/S1*.tif")
-    for this_file in file_list:
+    for k, this_file in enumerate(file_list):
+        # Ad polarization info to snap filename
+        file_dir, filename = (os.path.dirname(this_file), os.path.basename(this_file))
+        filename = filename[:28] + identifier[9] + filename[28:]
+        this_file_new = os.path.join(file_dir, filename)
+        shutil.move(this_file, this_file_new)
+        this_file = this_file_new
+
         # Add metadata to geotiff headers
         subprocess.run(['gdal_edit.py',
                         '-mo', 'snap_version=7.0',
