@@ -1,7 +1,8 @@
-
+from datetime import datetime
 from equi7grid import equi7grid
 from equi7grid.image2equi7grid import image2equi7grid
 from glob import glob
+import logger
 from osgeo.gdal import Translate
 import os
 from pyroSAR import snap
@@ -15,6 +16,8 @@ from uuid import uuid4
 def geocode(infile, outdir, shapefile, externalDEMFile=None,
             refarea='gamma0', terrainFlattening=True, tmp_dir=None):
 
+    logger.basicConfig(f"{os.path.basename(infile)}.log")
+
     start_time = time.time()
     identifier = os.path.splitext(os.path.split(infile)[1])[0]
     if not tmp_dir:
@@ -24,13 +27,16 @@ def geocode(infile, outdir, shapefile, externalDEMFile=None,
     os.makedirs(outdir, exist_ok=True)
 
     if externalDEMFile:
+        logger.info(f"{str(datetime.now())}: starting cropping DEM {externalDEMFile}.")
         # Crop DEM to bbox of infile
         externalDEMFile = crop_DEM(infile, externalDEMFile, tmp_dir_snap)
+        logger.info(f"{str(datetime.now())}: finished cropping DEM {externalDEMFile}.")
 
     epsg = 4326
     sampling = 10  # in meters
 
-    _ = snap.geocode(infile=infile,
+    logger.info(f"{str(datetime.now())}: starting pyroSAR SNAP processing chain.")
+    xml_file = snap.geocode(infile=infile,
                      outdir=tmp_dir_snap,
                      refarea=refarea,
                      t_srs=epsg,
@@ -40,10 +46,13 @@ def geocode(infile, outdir, shapefile, externalDEMFile=None,
                      externalDEMApplyEGM=False,
                      terrainFlattening=terrainFlattening,
                      cleanup=True, allow_RES_OSV=True,
-                     scaling='linear', groupsize=1, removeS1ThermalNoise=True
+                     scaling='linear', groupsize=1, removeS1ThermalNoise=True,
+                     returnWF=True
                      )
+    logger.info(f"{str(datetime.now())}: finished pyroSAR SNAP processing chain.")
+    import pdb; pdb.set_trace()
     # Move log file and SNAP xml file to outdir
-    xml_file = glob(os.path.join(tmp_dir_snap, "*.xml"))[0]
+    #xml_file = glob(os.path.join(tmp_dir_snap, "*.xml"))[0]
     shutil.move(xml_file, xml_file.replace(tmp_dir_snap, outdir))
     orb_dir = os.path.basename(f"{xml_file}")[10].replace('A', 'ascending').replace('D', 'descending')
     e7 = equi7grid.Equi7Grid(sampling=10)
