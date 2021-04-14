@@ -46,81 +46,87 @@ def geocode(infile, outdir, shapefile, externalDEMFile=None,
     sampling = 10  # in meters
 
     # Direct SNAP/pyroSAR stdout to Python variable
-    sys.stdout = mystdout = StringIO()
-    logging.info("Starting pyroSAR SNAP processing chain.")
-    xml_file = snap.geocode(infile=infile,
-                            outdir=tmp_dir_snap,
-                            refarea=refarea,
-                            t_srs=epsg,
-                            tr=sampling,
-                            shapefile=shapefile,
-                            externalDEMFile=externalDEMFile,
-                            externalDEMApplyEGM=False,
-                            terrainFlattening=terrainFlattening,
-                            cleanup=True, allow_RES_OSV=True,
-                            scaling='linear', groupsize=1, removeS1ThermalNoise=True,
-                            returnWF=True
-                            )
-    # Set stdout to default value
-    sys.stdout = sys.__stdout__
+    try:
+        sys.stdout = mystdout = StringIO()
+        logging.info("Starting pyroSAR SNAP processing chain.")
+        xml_file = snap.geocode(infile=infile,
+                                outdir=tmp_dir_snap,
+                                refarea=refarea,
+                                t_srs=epsg,
+                                tr=sampling,
+                                shapefile=shapefile,
+                                externalDEMFile=externalDEMFile,
+                                externalDEMApplyEGM=False,
+                                terrainFlattening=terrainFlattening,
+                                cleanup=True, allow_RES_OSV=True,
+                                scaling='linear', groupsize=1, removeS1ThermalNoise=True,
+                                returnWF=True
+                                )
+        # Set stdout to default value
+        sys.stdout = sys.__stdout__
 
-    # Analyze logs form SNAP/pyroSAR
-    error_patterns = ('failed', 'error', 'exception', 'severe')
-    skip_patterns = ('\t', 'Caused by')
-    output_lines = mystdout.getvalue().split('\n')
-    equi7_flag = True
-    for output_line in output_lines:
-        skip_flag = any([True if pattern in output_line.lower() else False for pattern in skip_patterns]) or len(output_line) == 0
-        error_flag = any([True if pattern in output_line.lower() else False for pattern in error_patterns])
-        # if output_line.startswith('\t') or output_line.startswith('Caused by') or len(output_line) == 0:
-        if skip_flag:
-            # Skip embedded Java tracebacks or empty lines
-            continue
-        elif error_flag:
-            # if any([True if pattern in output_line.lower() else False for pattern in error_patterns]):
-            logging.error(output_line)
-            equi7_flag = False
-        else:
-            logging.info(output_line)
-    logging.info("Finished pyroSAR SNAP processing chain.")
+        # Analyze logs form SNAP/pyroSAR
+        error_patterns = ('failed', 'error', 'exception', 'severe')
+        skip_patterns = ('\t', 'Caused by')
+        output_lines = mystdout.getvalue().split('\n')
+        equi7_flag = True
+        for output_line in output_lines:
+            skip_flag = any([True if pattern in output_line.lower() else False for pattern in skip_patterns]) or len(output_line) == 0
+            error_flag = any([True if pattern in output_line.lower() else False for pattern in error_patterns])
+            # if output_line.startswith('\t') or output_line.startswith('Caused by') or len(output_line) == 0:
+            if skip_flag:
+                # Skip embedded Java tracebacks or empty lines
+                continue
+            elif error_flag:
+                # if any([True if pattern in output_line.lower() else False for pattern in error_patterns]):
+                logging.error(output_line)
+                equi7_flag = False
+            else:
+                logging.info(output_line)
+        logging.info("Finished pyroSAR SNAP processing chain.")
 
-    if equi7_flag:
-        # Move log file and SNAP xml file to outdir
-        logging.info("Starting to tile output with Equi7.")
-        shutil.move(xml_file, xml_file.replace(tmp_dir_snap, outdir))
-        orb_dir = os.path.basename(f"{xml_file}")[10].replace('A', 'ascending').replace('D', 'descending')
-        e7 = equi7grid.Equi7Grid(sampling=10)
-        file_list = glob(tmp_dir_snap + "/S1*.tif")
-        for k, this_file in enumerate(file_list):
-            # Ad polarization info to snap filename
-            file_dir, filename = (os.path.dirname(this_file), os.path.basename(this_file))
-            filename = filename[:28] + identifier[9] + filename[28:]
-            this_file_new = os.path.join(file_dir, filename)
-            shutil.move(this_file, this_file_new)
-            this_file = this_file_new
+        if equi7_flag:
+            # Move log file and SNAP xml file to outdir
+            logging.info("Starting to tile output with Equi7.")
+            shutil.move(xml_file, xml_file.replace(tmp_dir_snap, outdir))
+            orb_dir = os.path.basename(f"{xml_file}")[10].replace('A', 'ascending').replace('D', 'descending')
+            e7 = equi7grid.Equi7Grid(sampling=10)
+            file_list = glob(tmp_dir_snap + "/S1*.tif")
+            for k, this_file in enumerate(file_list):
+                # Ad polarization info to snap filename
+                file_dir, filename = (os.path.dirname(this_file), os.path.basename(this_file))
+                filename = filename[:28] + identifier[9] + filename[28:]
+                this_file_new = os.path.join(file_dir, filename)
+                shutil.move(this_file, this_file_new)
+                this_file = this_file_new
 
-            # Add metadata to geotiff headers
-            subprocess.run(['gdal_edit.py',
-                            '-mo', 'snap_version=7.0',
-                            '-mo', f'snap_xml_graph={xml_file}',
-                            '-mo', 'proc_facility=EODC-cloud',
-                            '-mo', f'start_time={identifier[17:32]}',
-                            '-mo', f'end_time={identifier[33:48]}',
-                            '-mo', f'orbit_direction={orb_dir}',
-                            this_file
-                            ], capture_output=True)
+                # Add metadata to geotiff headers
+                subprocess.run(['gdal_edit.py',
+                                '-mo', 'snap_version=7.0',
+                                '-mo', f'snap_xml_graph={xml_file}',
+                                '-mo', 'proc_facility=EODC-cloud',
+                                '-mo', f'start_time={identifier[17:32]}',
+                                '-mo', f'end_time={identifier[33:48]}',
+                                '-mo', f'orbit_direction={orb_dir}',
+                                this_file
+                                ], capture_output=True)
 
-            # Reproject and tile to EQUI7
-            _ = image2equi7grid(e7, image=this_file,
-                                output_dir=outdir,
-                                gdal_path="/usr/bin")
-        shutil.rmtree(tmp_dir)
-        logging.info("Finished to tile output with Equi7.")
+                # Reproject and tile to EQUI7
+                _ = image2equi7grid(e7, image=this_file,
+                                    output_dir=outdir,
+                                    gdal_path="/usr/bin")
+            shutil.rmtree(tmp_dir)
+            logging.info("Finished to tile output with Equi7.")
 
-        proc_time = time.time() - start_time
-        minutes = floor(proc_time / 60)
-        seconds = round(((proc_time / 60) - minutes) * 60)
-        logging.info(f"File {infile} processed in {str(minutes)} minutes and {str(seconds)} seconds.")
+            proc_time = time.time() - start_time
+            minutes = floor(proc_time / 60)
+            seconds = round(((proc_time / 60) - minutes) * 60)
+            logging.info(f"File {infile} processed in {str(minutes)} minutes and {str(seconds)} seconds.")
+
+    except Exception as exp:
+        # Set stdout to default value
+        sys.stdout = sys.__stdout__
+        logging.error(f"{exp}")
 
 
 def crop_DEM(infile, dem_filepath, tmp_dir):
