@@ -83,9 +83,9 @@ def geocode(infile, outdir, shapefile, externalDEMFile=None,
                 equi7_flag = False
             else:
                 logging.info(output_line)
-        logging.info("Finished pyroSAR SNAP processing chain.")
 
         if equi7_flag:
+            logging.info("Finished pyroSAR SNAP processing chain.")
             # Move log file and SNAP xml file to outdir
             logging.info("Starting to tile output with Equi7.")
             shutil.move(xml_file, xml_file.replace(tmp_dir_snap, outdir))
@@ -116,6 +116,7 @@ def geocode(infile, outdir, shapefile, externalDEMFile=None,
                                     output_dir=outdir,
                                     gdal_path="/usr/bin")
             shutil.rmtree(tmp_dir)
+            logging.info(f"Deleted temp dir {tmp_dir}")
             logging.info("Finished to tile output with Equi7.")
 
             proc_time = time.time() - start_time
@@ -127,6 +128,8 @@ def geocode(infile, outdir, shapefile, externalDEMFile=None,
         # Set stdout to default value
         sys.stdout = sys.__stdout__
         logging.error(f"{exp}")
+        shutil.rmtree(tmp_dir)
+        logging.info(f"Deleted temp dir {tmp_dir}")
 
 
 def crop_DEM(infile, dem_filepath, tmp_dir):
