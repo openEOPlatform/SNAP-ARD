@@ -115,8 +115,8 @@ def geocode(infile, outdir, shapefile, externalDEMFile=None,
                 _ = image2equi7grid(e7, image=this_file,
                                     output_dir=outdir,
                                     gdal_path="/usr/bin")
-            shutil.rmtree(tmp_dir)
-            logging.info(f"Deleted temp dir {tmp_dir}")
+            shutil.rmtree(tmp_dir_snap)
+            logging.info(f"Deleted temp dir {tmp_dir_snap}")
             logging.info("Finished to tile output with Equi7.")
 
             proc_time = time.time() - start_time
@@ -128,8 +128,8 @@ def geocode(infile, outdir, shapefile, externalDEMFile=None,
         # Set stdout to default value
         sys.stdout = sys.__stdout__
         logging.error(f"{exp}")
-        shutil.rmtree(tmp_dir)
-        logging.info(f"Deleted temp dir {tmp_dir}")
+        shutil.rmtree(tmp_dir_snap)
+        logging.info(f"Deleted temp dir {tmp_dir_snap}")
 
 
 def crop_DEM(infile, dem_filepath, tmp_dir):
