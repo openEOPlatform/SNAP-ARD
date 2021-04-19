@@ -115,6 +115,15 @@ def geocode(infile, outdir, shapefile, externalDEMFile=None,
                 _ = image2equi7grid(e7, image=this_file,
                                     output_dir=outdir,
                                     gdal_path="/usr/bin")
+            # Delete empty files (sometimes created by EQUI7)
+            output_files = glob(outdir + f"/EQUI7_EU010M/*/*{identifier[17:32]}*")
+            for output_file in output_files:
+                # Empty files created by EQUI7 are 734 KB in size
+                # Remove if filesize under 1 MB
+                filesize = round(os.path.getsize(output_files[0]) / 1024)
+                if filesize < 1024:
+                    os.remove(output_file)
+                    logging.info(f"Deleted {output_file} with size {str(filesize)}K.")
             shutil.rmtree(tmp_dir_snap)
             logging.info(f"Deleted temp dir {tmp_dir_snap}")
             logging.info("Finished to tile output with Equi7.")
