@@ -120,7 +120,7 @@ def geocode(infile, outdir, shapefile, externalDEMFile=None,
             for output_file in output_files:
                 # Empty files created by EQUI7 are 734 KB in size
                 # Remove if filesize under 1 MB
-                filesize = round(os.path.getsize(output_files[0]) / 1024)
+                filesize = round(os.path.getsize(output_file) / 1024)
                 if filesize < 1024:
                     os.remove(output_file)
                     logging.info(f"Deleted {output_file} with size {str(filesize)}K.")
