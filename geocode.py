@@ -15,7 +15,7 @@ import time
 from uuid import uuid4
 
 
-def geocode(infile, outdir, shapefile, externalDEMFile=None,
+def geocode(infile, outdir, shapefile, job_id, job_id_vsc="9999", externalDEMFile=None,
             refarea='gamma0', terrainFlattening=True, tmp_dir=None):
 
     start_time = time.time()
@@ -28,7 +28,7 @@ def geocode(infile, outdir, shapefile, externalDEMFile=None,
     os.makedirs(outdir + "/logs", exist_ok=True)
 
     # Setup logger
-    json_format = logging.Formatter('{"time": "%(asctime)s", "level": "%(levelname)s", "message": "%(message)s"}')
+    json_format = logging.Formatter(f'{"filepath": {infile}, "job_id": {job_id}, "job_id_vsc": {job_id_vsc}, "time": "%(asctime)s", "level": "%(levelname)s", "message": "%(message)s"}')
     log_file = os.path.join(outdir, "logs", f"{os.path.basename(infile)}.jsonl")
     logging.basicConfig(filename=log_file,
                         level=logging.DEBUG)
@@ -131,7 +131,7 @@ def geocode(infile, outdir, shapefile, externalDEMFile=None,
             proc_time = time.time() - start_time
             minutes = floor(proc_time / 60)
             seconds = round(((proc_time / 60) - minutes) * 60)
-            logging.info(f"File {infile} processed in {str(minutes)} minutes and {str(seconds)} seconds.")
+            logging.info(f"Success! File {infile} processed in {str(minutes)} minutes and {str(seconds)} seconds.")
 
     except Exception as exp:
         # Set stdout to default value
