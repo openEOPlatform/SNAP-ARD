@@ -28,7 +28,7 @@ def geocode(infile, outdir, shapefile, job_id, job_id_vsc="9999", externalDEMFil
     os.makedirs(outdir + "/logs", exist_ok=True)
 
     # Setup logger
-    json_format = logging.Formatter(f'{"filepath": {infile}, "job_id": {job_id}, "job_id_vsc": {job_id_vsc}, "time": "%(asctime)s", "level": "%(levelname)s", "message": "%(message)s"}')
+    json_format = logging.Formatter(f'{{"filepath": "{infile}", "job_id": "{job_id}", "job_id_vsc": "{job_id_vsc}", "time": "%(asctime)s", "level": "%(levelname)s", "message": "%(message)s"}}')
     log_file = os.path.join(outdir, "logs", f"{os.path.basename(infile)}.jsonl")
     logging.basicConfig(filename=log_file,
                         level=logging.DEBUG)
