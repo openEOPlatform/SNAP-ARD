@@ -16,7 +16,7 @@ from uuid import uuid4
 
 
 def geocode(infile, outdir, shapefile, job_id, job_id_vsc="9999", externalDEMFile=None,
-            refarea='gamma0', terrainFlattening=True, tmp_dir=None):
+            refarea='gamma0', terrainFlattening=True, tmp_dir=None, logdir=None):
 
     start_time = time.time()
     identifier = os.path.splitext(os.path.split(infile)[1])[0]
@@ -25,11 +25,13 @@ def geocode(infile, outdir, shapefile, job_id, job_id_vsc="9999", externalDEMFil
     tmp_dir_snap = tmp_dir + "/" + identifier
     os.makedirs(tmp_dir_snap, exist_ok=True)
     os.makedirs(outdir, exist_ok=True)
+    if not logdir:
+        logdir = outdir + "/logs"
     os.makedirs(outdir + "/logs", exist_ok=True)
 
     # Setup logger
     json_format = logging.Formatter(f'{{"filepath": "{infile}", "job_id": "{job_id}", "job_id_vsc": "{job_id_vsc}", "time": "%(asctime)s", "level": "%(levelname)s", "message": "%(message)s"}}')
-    log_file = os.path.join(outdir, "logs", f"{os.path.basename(infile)}.jsonl")
+    log_file = os.path.join(logdir, f"{os.path.basename(infile)}.jsonl")
     logging.basicConfig(filename=log_file,
                         level=logging.DEBUG)
     root = logging.getLogger()
