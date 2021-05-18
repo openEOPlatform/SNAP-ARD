@@ -21,8 +21,8 @@ def geocode(infile, outdir, shapefile, job_id, job_id_vsc="9999", externalDEMFil
     start_time = time.time()
     identifier = os.path.splitext(os.path.split(infile)[1])[0]
     if not tmp_dir:
-        tmp_dir = "/tmp/" + str(uuid4())
-    tmp_dir_snap = tmp_dir + "/" + identifier
+        tmp_dir = "/tmp"
+    tmp_dir_snap = os.path.join(tmp_dir, str(uuid4()), identifier)
     os.makedirs(tmp_dir_snap, exist_ok=True)
     os.makedirs(outdir, exist_ok=True)
     if not logdir:
